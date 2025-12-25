@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DutySecure | Initializing...</title>
+    <title>DutySecure | Setup</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -17,51 +17,147 @@
             text-align: center;
         }
         .loader-card {
-            background: rgba(22, 27, 34, 0.6);
+            background: rgba(22, 27, 34, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 40px;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            max-width: 400px;
+            max-width: 500px;
             width: 90%;
+            transition: all 0.3s ease;
         }
-        .spinner-border { width: 3rem; height: 3rem; color: #0d6efd; }
-        h2 { font-weight: 700; margin-top: 20px; font-size: 1.5rem; }
-        p { color: #8b949e; font-size: 0.9rem; margin-top: 10px; }
-        .progress { height: 6px; margin-top: 20px; background-color: #21262d; }
+        .icon-box {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #0d6efd;
+        }
+        h2 { font-weight: 700; margin-bottom: 15px; }
+        p { color: #a0aec0; font-size: 1rem; line-height: 1.6; }
+        
+        .btn-start {
+            background: linear-gradient(45deg, #0d6efd, #0043a8);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+            margin-top: 20px;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4); color: white;}
+
+        /* Progress Section (Hidden by default) */
+        #progress-section { display: none; }
+        .progress { height: 8px; margin-top: 25px; background-color: #21262d; }
         .progress-bar { background: linear-gradient(90deg, #0d6efd, #00d2ff); }
+        .status-text { font-size: 0.9rem; margin-top: 15px; color: #8b949e; font-style: italic;}
     </style>
 </head>
 <body>
+
     <div class="loader-card">
-        <div class="spinner-border" role="status"></div>
-        <h2>Setting Up AI Engine</h2>
-        <p>First time setup. Downloading 1GB model...<br>Please do not close this window.</p>
-        <div class="progress">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+        
+       <div id="intro-section">
+            <div class="icon-box">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            
+            <h2 class="mb-3">SecureDuty Privacy Shield</h2>
+            
+            <p class="lead mb-4" style="font-size: 1.1rem; color: #e6e6e6;">
+                Welcome to the SecureDuty Secure Environment.
+            </p>
+
+            <p>
+                Most AI tools send your data to the cloud, creating privacy risks.<br>
+                <strong>SecureDuty is different. It runs 100% OFFLINE.</strong>
+            </p>
+
+            <p style="font-size: 0.95rem; color: #a0aec0; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                To enable this, we need to install the <strong>'Llama-3.2-1B' Neural Network</strong> directly onto your device. 
+                This allows us to process rosters without a single byte of data leaving this computer.
+            </p>
+
+            <p class="mt-4 mb-3 fw-bold" style="color: #0d6efd;">
+                Ready to initialize local AI engine.
+            </p>
+
+            <button class="btn btn-success btn-lg px-5 py-3 fw-bold shadow" onclick="startProcess()" style="background: linear-gradient(45deg, #198754, #157347); border: none;">
+                Download & Install AI Model
+            </button>
         </div>
+
+        <div id="progress-section">
+            <div class="spinner-border text-primary mb-3" role="status"></div>
+            <h2>Installing AI Model...</h2>
+            <p>Please do not close this window. <br>Depending on your internet, this may take a few minutes.</p>
+            
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+            </div>
+            <p class="status-text" id="status-msg">Connecting to secure server...</p>
+        </div>
+
     </div>
 
     <script>
-        // Check status every 2 seconds
+        // 1. Get the status from Python (True or False)
+        const modelExists = {{ model_exists|tojson }};
+
+        function startProcess() {
+            // Switch UI to Progress View
+            document.getElementById('intro-section').style.display = 'none';
+            document.getElementById('progress-section').style.display = 'block';
+
+            // Trigger the backend setup
+            fetch('/start-setup')
+                .then(response => {
+                    // Update text based on whether we are downloading or just loading
+                    if (modelExists) {
+                        document.getElementById('status-msg').innerText = "Model found. Loading into memory...";
+                        document.querySelector('#progress-section h2').innerText = "Starting AI Engine...";
+                        document.querySelector('#progress-section p').innerText = "Please wait while we initialize the local brain.";
+                    } else {
+                        document.getElementById('status-msg').innerText = "Download in progress...";
+                    }
+                    
+                    // Start checking for completion
+                    checkStatus();
+                })
+                .catch(err => {
+                    document.getElementById('status-msg').innerText = "Error starting setup.";
+                    document.getElementById('status-msg').style.color = "#ff4757";
+                });
+        }
+
         function checkStatus() {
             fetch('/check-status')
                 .then(response => response.json())
                 .then(data => {
                     if (data.ready) {
-                        window.location.reload(); // Reload to show the main app
+                        document.getElementById('status-msg').innerText = "Ready! Launching Dashboard...";
+                        setTimeout(() => {
+                            window.location.reload(); 
+                        }, 500);
                     } else {
-                        setTimeout(checkStatus, 2000);
+                        setTimeout(checkStatus, 1000);
                     }
                 })
-                .catch(err => setTimeout(checkStatus, 3000));
+                .catch(err => setTimeout(checkStatus, 2000));
         }
 
-        // Trigger the setup immediately
-        fetch('/start-setup');
-        // Start checking
-        checkStatus();
+        // --- AUTOMATIC START LOGIC ---
+        window.onload = function() {
+            if (modelExists) {
+                // If model exists, skip the button and start automatically
+                startProcess();
+            }
+            // If model does NOT exist, do nothing (user sees the Intro and must click button)
+        };
+        
+        // Bind the button click for the manual case
+        // (Make sure your button in HTML has: onclick="startProcess()")
     </script>
 </body>
 </html>

@@ -42,11 +42,13 @@ def background_setup():
 
 @app.route('/')
 def index():
-    # If AI isn't ready, show the Loading Page
+    # Check if the model file is already on the disk
+    model_on_disk = os.path.exists(MODEL_PATH)
+
     if not is_ready:
-        return render_template('loading.html')
+        # Pass this 'model_on_disk' fact to the HTML
+        return render_template('loading.html', model_exists=model_on_disk)
     
-    # If AI is ready, show the Main App
     return render_template('index.html')
 
 @app.route('/start-setup')
